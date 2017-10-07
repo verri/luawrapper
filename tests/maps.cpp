@@ -14,6 +14,19 @@ TEST(Maps, MapString) {
     EXPECT_EQ(2, b.at("bar"));
 }
 
+TEST(Maps, MapStringReverse) {
+    LuaContext context;
+
+    using map_type = std::map<std::string, int, std::greater<std::string>>;
+
+    map_type a{{"foo", 1}, {"bar", 2}};
+    context.writeVariable("a", a);
+
+    const auto b = context.readVariable<std::map<std::string, int>>("a");
+    EXPECT_EQ(1, b.at("foo"));
+    EXPECT_EQ(2, b.at("bar"));
+}
+
 TEST(Maps, UnorderedMapString) {
     LuaContext context;
 
