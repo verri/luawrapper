@@ -35,21 +35,22 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <type_traits>
 
 #ifdef _MSC_VER
-#   define EXCEPTION_HPP_NORETURN_MACRO __declspec(noreturn)
+#define EXCEPTION_HPP_NORETURN_MACRO __declspec(noreturn)
 #else
-#   define EXCEPTION_HPP_NORETURN_MACRO [[noreturn]]
+#define EXCEPTION_HPP_NORETURN_MACRO [[noreturn]]
 #endif
 
 namespace std {
-    class nested_exception {
+    class nested_exception
+    {
     public:
         nested_exception() : nested(current_exception()) {}
         virtual ~nested_exception() {}
 
         EXCEPTION_HPP_NORETURN_MACRO
-        void rethrow_nested() const         { std::rethrow_exception(nested); }
+        void rethrow_nested() const { std::rethrow_exception(nested); }
 
-        exception_ptr nested_ptr() const        { return nested; }
+        exception_ptr nested_ptr() const { return nested; }
 
 
     private:
@@ -57,8 +58,7 @@ namespace std {
     };
 
     template<typename T>
-    EXCEPTION_HPP_NORETURN_MACRO
-    void throw_with_nested(T&& t)
+    EXCEPTION_HPP_NORETURN_MACRO void throw_with_nested(T&& t)
     {
         typedef remove_reference<T>::type RealT;
 
@@ -67,7 +67,7 @@ namespace std {
             ThrowWithNestedExcept(T&& t) : RealT(std::forward<T>(t)) {}
         };
 
-        if (is_base_of<nested_exception,RealT>::value)
+        if (is_base_of<nested_exception, RealT>::value)
             throw std::forward<T>(t);
         else
             throw ThrowWithNestedExcept(std::forward<T>(t));

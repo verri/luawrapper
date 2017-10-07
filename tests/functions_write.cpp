@@ -1,29 +1,30 @@
 #include <LuaContext.hpp>
 #include <gtest/gtest.h>
 
-TEST(FunctionsWrite, NativeFunctions) {
-    struct Foo {
-        static int increment(int x)
-        {
-            return x + 1;
-        }
+TEST(FunctionsWrite, NativeFunctions)
+{
+    struct Foo
+    {
+        static int increment(int x) { return x + 1; }
     };
 
     LuaContext context;
-    
+
     context.writeVariable("f", &Foo::increment);
-    context.writeFunction<int (int)>("g", &Foo::increment);
+    context.writeFunction<int(int)>("g", &Foo::increment);
     context.writeFunction("h", &Foo::increment);
 
     EXPECT_EQ(3, context.executeCode<int>("return f(2)"));
     EXPECT_EQ(13, context.executeCode<int>("return g(12)"));
     EXPECT_EQ(9, context.executeCode<int>("return h(8)"));
-    EXPECT_THROW(context.executeCode<int>("return f(true)"), LuaContext::ExecutionErrorException);
+    EXPECT_THROW(context.executeCode<int>("return f(true)"),
+                 LuaContext::ExecutionErrorException);
 }
 
 TEST(FunctionsWrite, ConstRefParameters)
 {
-    struct Foo {
+    struct Foo
+    {
         static int length(const std::string& x)
         {
             EXPECT_EQ("test", x);
@@ -32,7 +33,7 @@ TEST(FunctionsWrite, ConstRefParameters)
     };
 
     LuaContext context;
-    
+
     context.writeVariable("f", &Foo::length);
     EXPECT_EQ(4, context.executeCode<int>("return f('test')"));
 }
@@ -41,21 +42,24 @@ TEST(FunctionsWrite, VariantParameters)
 {
     LuaContext context;
 
-    struct Foo {};
+    struct Foo
+    {};
     context.writeVariable("foo", Foo{});
-    context.writeFunction("f", [](const boost::variant<int, Foo&>& val) { return val.which(); });
+    context.writeFunction(
+        "f", [](const boost::variant<int, Foo&>& val) { return val.which(); });
 
     EXPECT_EQ(1, context.executeCode<int>("return f(foo)"));
     EXPECT_EQ(0, context.executeCode<int>("return f(3)"));
 }
 
-TEST(FunctionsWrite, FunctionObjects) {
-    struct Foo {
-        int operator()(int x) {
-            return x + 1;
-        }
+TEST(FunctionsWrite, FunctionObjects)
+{
+    struct Foo
+    {
+        int operator()(int x) { return x + 1; }
 
-        double operator()(double) {
+        double operator()(double)
+        {
             EXPECT_TRUE(false);
             return 0;
         }
@@ -63,47 +67,45 @@ TEST(FunctionsWrite, FunctionObjects) {
 
 
     LuaContext context;
-    
-    context.writeVariable("f", std::function<int (int)>(Foo{}));
-    context.writeFunction<int (int)>("g", Foo{});
+
+    context.writeVariable("f", std::function<int(int)>(Foo{}));
+    context.writeFunction<int(int)>("g", Foo{});
 
     EXPECT_EQ(3, context.executeCode<int>("return f(2)"));
     EXPECT_EQ(13, context.executeCode<int>("return g(12)"));
 }
 
-TEST(FunctionsWrite, FunctionObjectsConst) {
-    struct Foo {
-        int operator()(int x) {
-            return x + 1;
-        }
-        
-        int operator()(int x) const {
-            return x + 1;
-        }
+TEST(FunctionsWrite, FunctionObjectsConst)
+{
+    struct Foo
+    {
+        int operator()(int x) { return x + 1; }
+
+        int operator()(int x) const { return x + 1; }
     };
 
 
     LuaContext context;
-    
-    context.writeVariable("f", std::function<int (int)>(Foo{}));
-    context.writeFunction<int (int)>("g", Foo{});
+
+    context.writeVariable("f", std::function<int(int)>(Foo{}));
+    context.writeFunction<int(int)>("g", Foo{});
 
     EXPECT_EQ(3, context.executeCode<int>("return f(2)"));
     EXPECT_EQ(13, context.executeCode<int>("return g(12)"));
 }
 
-TEST(FunctionsWrite, FunctionObjectsAutodetect) {
-    struct Foo {
-        int operator()(int x) {
-            return x + 1;
-        }
+TEST(FunctionsWrite, FunctionObjectsAutodetect)
+{
+    struct Foo
+    {
+        int operator()(int x) { return x + 1; }
     };
 
 
     LuaContext context;
-    
-    context.writeVariable("f", std::function<int (int)>(Foo{}));
-    context.writeFunction<int (int)>("g", Foo{});
+
+    context.writeVariable("f", std::function<int(int)>(Foo{}));
+    context.writeFunction<int(int)>("g", Foo{});
     context.writeFunction("h", Foo{});
 
     EXPECT_EQ(3, context.executeCode<int>("return f(2)"));
@@ -111,13 +113,14 @@ TEST(FunctionsWrite, FunctionObjectsAutodetect) {
     EXPECT_EQ(9, context.executeCode<int>("return h(8)"));
 }
 
-TEST(FunctionsWrite, Lambdas) {
+TEST(FunctionsWrite, Lambdas)
+{
     LuaContext context;
-    
+
     const auto konst = 1;
     const auto lambda = [&](int x) { return x + konst; };
-    context.writeVariable("f", std::function<int (int)>(lambda));
-    context.writeFunction<int (int)>("g", lambda);
+    context.writeVariable("f", std::function<int(int)>(lambda));
+    context.writeFunction<int(int)>("g", lambda);
     context.writeFunction("h", lambda);
 
     EXPECT_EQ(3, context.executeCode<int>("return f(2)"));
@@ -125,11 +128,11 @@ TEST(FunctionsWrite, Lambdas) {
     EXPECT_EQ(9, context.executeCode<int>("return h(8)"));
 }
 
-TEST(FunctionsWrite, DestructorCalled) {
-    struct Foo {
-        int operator()(int x) {
-            return x + 1;
-        }
+TEST(FunctionsWrite, DestructorCalled)
+{
+    struct Foo
+    {
+        int operator()(int x) { return x + 1; }
 
         std::shared_ptr<char> dummy;
     };
@@ -146,10 +149,11 @@ TEST(FunctionsWrite, DestructorCalled) {
     EXPECT_TRUE(dummy.expired());
 }
 
-TEST(FunctionsWrite, ReturningMultipleValues) {
+TEST(FunctionsWrite, ReturningMultipleValues)
+{
     LuaContext context;
-    
-    context.writeFunction("f", [](int x) { return std::make_tuple(x, x+1, "hello"); });
+
+    context.writeFunction("f", [](int x) { return std::make_tuple(x, x + 1, "hello"); });
     context.executeCode("a, b, c = f(2)");
 
     EXPECT_EQ(2, context.readVariable<int>("a"));
@@ -157,48 +161,52 @@ TEST(FunctionsWrite, ReturningMultipleValues) {
     EXPECT_EQ("hello", context.readVariable<std::string>("c"));
 }
 
-TEST(FunctionsWrite, PolymorphicFunctions) {
+TEST(FunctionsWrite, PolymorphicFunctions)
+{
     LuaContext context;
-    
+
     context.writeFunction("f",
-        [](boost::variant<int,bool,std::string> x) -> std::string
-        {
-            if (x.which() == 0)
-                return "int";
-            else if (x.which() == 1)
-                return "bool";
-            else
-                return "string";
-        }
-    );
+                          [](boost::variant<int, bool, std::string> x) -> std::string {
+                              if (x.which() == 0)
+                                  return "int";
+                              else if (x.which() == 1)
+                                  return "bool";
+                              else
+                                  return "string";
+                          });
 
     EXPECT_EQ("int", context.executeCode<std::string>("return f(2)"));
     EXPECT_EQ("bool", context.executeCode<std::string>("return f(true)"));
     EXPECT_EQ("string", context.executeCode<std::string>("return f('test')"));
 }
 
-TEST(FunctionsWrite, VariadicFunctions) {
+TEST(FunctionsWrite, VariadicFunctions)
+{
     LuaContext context;
 
-    context.writeFunction("f",
-        [](int a, boost::optional<int> b, boost::optional<double> c) -> int {
+    context.writeFunction(
+        "f", [](int a, boost::optional<int> b, boost::optional<double> c) -> int {
             return c.is_initialized() ? 3 : (b.is_initialized() ? 2 : 1);
-        }
-    );
-    
+        });
+
     EXPECT_EQ(1, context.executeCode<int>("return f(12)"));
     EXPECT_EQ(2, context.executeCode<int>("return f(12, 24)"));
-    EXPECT_THROW(context.executeCode<int>("return f(12, 24, \"hello\")"), LuaContext::ExecutionErrorException);
+    EXPECT_THROW(context.executeCode<int>("return f(12, 24, \"hello\")"),
+                 LuaContext::ExecutionErrorException);
     EXPECT_EQ(3, context.executeCode<int>("return f(12, 24, 3.5)"));
-    
-    context.writeFunction("g", [](boost::optional<int> a, boost::optional<int> b, int c) -> int { return 3; });
+
+    context.writeFunction(
+        "g",
+        [](boost::optional<int> a, boost::optional<int> b, int c) -> int { return 3; });
     EXPECT_EQ(3, context.executeCode<int>("return g(10, 20, 30)"));
-    EXPECT_THROW(context.executeCode<int>("return g(12, 24)"), LuaContext::ExecutionErrorException);
+    EXPECT_THROW(context.executeCode<int>("return g(12, 24)"),
+                 LuaContext::ExecutionErrorException);
 }
 
-TEST(FunctionsWrite, AccessLuaFromWithinCallback) {
+TEST(FunctionsWrite, AccessLuaFromWithinCallback)
+{
     LuaContext context;
-    
+
     context.writeFunction("read", [&](const std::string& varName) {
         EXPECT_EQ(5, context.readVariable<int>(varName));
     });
@@ -206,9 +214,10 @@ TEST(FunctionsWrite, AccessLuaFromWithinCallback) {
     context.executeCode("x = 5; read(\"x\");");
 }
 
-TEST(FunctionsWrite, ExecuteLuaFromWithinCallback) {
+TEST(FunctionsWrite, ExecuteLuaFromWithinCallback)
+{
     LuaContext context;
-    
+
     context.writeFunction("exec", [&](const std::string& varName) {
         EXPECT_EQ("x", varName);
         context.executeCode("x = 10");
@@ -218,56 +227,58 @@ TEST(FunctionsWrite, ExecuteLuaFromWithinCallback) {
     context.executeCode("exec(\"x\")");
 }
 
-TEST(FunctionsWrite, CallbackNotLastArgument) {
+TEST(FunctionsWrite, CallbackNotLastArgument)
+{
     LuaContext context;
 
-    struct Foo {
-        static int a(void)
-        {
-            return 1;
-        }
+    struct Foo
+    {
+        static int a(void) { return 1; }
 
-        static int b(void)
-        {
-            return 2;
-        }
+        static int b(void) { return 2; }
     };
 
-    context.writeFunction("foo", [](std::function<int(void)> a, std::function<int(void)> b) {
-        return a();
-    });
+    context.writeFunction(
+        "foo",
+        [](std::function<int(void)> a, std::function<int(void)> b) { return a(); });
 
-    EXPECT_EQ(1, context.executeCode<int>("function a() return 1 end function b() return 2 end return foo(a,b)"));
+    EXPECT_EQ(1,
+              context.executeCode<int>(
+                  "function a() return 1 end function b() return 2 end return foo(a,b)"));
 }
 
-TEST(FunctionsWrite, ArgumentTypeMismatch) {
+TEST(FunctionsWrite, ArgumentTypeMismatch)
+{
     LuaContext context;
 
-    context.writeFunction("foo", [](const std::string&, int) { });
+    context.writeFunction("foo", [](const std::string&, int) {});
     try {
         context.executeCode("foo({}, 1)");
     } catch (LuaContext::ExecutionErrorException e) {
-        EXPECT_EQ(
-            std::string("Unable to convert parameter from table to ") + typeid(std::string).name(),
-            e.what());
+        EXPECT_EQ(std::string("Unable to convert parameter from table to ")
+                      + typeid(std::string).name(),
+                  e.what());
         return;
     }
 
-    GTEST_NONFATAL_FAILURE_("Didn't throw LuaContext::ExecutionErrorException as expected.");
+    GTEST_NONFATAL_FAILURE_(
+        "Didn't throw LuaContext::ExecutionErrorException as expected.");
 }
 
-TEST(FunctionsWrite, OptionalArgumentTypeMismatch) {
+TEST(FunctionsWrite, OptionalArgumentTypeMismatch)
+{
     LuaContext context;
 
-    context.writeFunction("foo", [](const boost::optional<std::string>&, int) { });
+    context.writeFunction("foo", [](const boost::optional<std::string>&, int) {});
     try {
         context.executeCode("foo({}, 1)");
     } catch (LuaContext::ExecutionErrorException e) {
-        EXPECT_EQ(
-            std::string("Unable to convert parameter from table to ") + typeid(boost::optional<std::string>).name(),
-            e.what());
+        EXPECT_EQ(std::string("Unable to convert parameter from table to ")
+                      + typeid(boost::optional<std::string>).name(),
+                  e.what());
         return;
     }
 
-    GTEST_NONFATAL_FAILURE_("Didn't throw LuaContext::ExecutionErrorException as expected.");
+    GTEST_NONFATAL_FAILURE_(
+        "Didn't throw LuaContext::ExecutionErrorException as expected.");
 }

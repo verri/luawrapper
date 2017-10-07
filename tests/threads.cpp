@@ -1,7 +1,8 @@
 #include <LuaContext.hpp>
 #include <gtest/gtest.h>
 
-TEST(Threads, Basics) {
+TEST(Threads, Basics)
+{
     LuaContext context;
     context.writeVariable("a", "hello");
 
